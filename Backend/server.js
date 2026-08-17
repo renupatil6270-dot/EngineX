@@ -13,6 +13,11 @@ const User = require('./models/User');
 const Roadmap = require('./models/Roadmap');
 
 const app = express();
+// Add with your existing route imports
+const quizRoutes = require('./routes/quiz');
+
+// Mount the route below your auth/syllabus routes
+app.use('/api/quiz', quizRoutes);
 
 // Middleware
 app.use(cors());
