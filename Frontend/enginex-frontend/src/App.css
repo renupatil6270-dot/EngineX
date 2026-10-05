@@ -374,3 +374,110 @@
 .auth-footer a:hover {
   text-decoration: underline;
 }
+/* Portal Selection Page */
+.portal-page {
+  min-height: calc(100vh - 64px);
+  padding: 3rem 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.portal-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.portal-header h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #cdd6f4;
+  margin-bottom: 0.5rem;
+}
+
+.portal-header p {
+  color: #a6adc8;
+  font-size: 1rem;
+}
+
+/* Portal Grid Layout */
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.75rem;
+  width: 100%;
+}
+
+/* Individual Portal Card */
+.portal-card {
+  background: #181825;
+  border: 1px solid #313244;
+  border-radius: 16px;
+  padding: 2rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.portal-card:hover {
+  transform: translateY(-6px);
+  border-color: #cba6f7;
+  box-shadow: 0 15px 35px rgba(203, 166, 247, 0.15);
+}
+
+.portal-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.portal-icon {
+  font-size: 2.25rem;
+}
+
+.portal-badge {
+  background-color: rgba(203, 166, 247, 0.12);
+  color: #cba6f7;
+  border: 1px solid rgba(203, 166, 247, 0.3);
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.portal-card h3 {
+  color: #cdd6f4;
+  font-size: 1.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.portal-card p {
+  color: #a6adc8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.portal-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #cba6f7;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.portal-card:hover .portal-action .arrow {
+  transform: translateX(4px);
+}
+
+.portal-action .arrow {
+  transition: transform 0.2s ease;
+}
