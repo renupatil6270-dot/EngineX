@@ -1,26 +1,82 @@
 // backend/routes/auth.js
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User'); // Your Mongoose User model
-const authMiddleware = require('../middleware/auth');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-// @route   GET /api/auth/me
-// @desc    Get current user profile using JWT token
-// @access  Private
-router.get('/me', authMiddleware, async (req, res) => {
+// Signup Route
+router.post('/signup', async (req, res) => {
   try {
-    // req.user.id was attached by authMiddleware
-    // .select('-password') excludes the hashed password field from being sent to the client
-    const user = await User.findById(req.user.id).select('-password');
+    const { name, email, password } = req.body;
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    // Check if user already exists
+    let existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    res.json({ user });
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    await newUser.save();
+
+    // Create JWT Token
+    const token = jwt.sign(
+      { userId: newUser._id, email: newUser.email },
+      process.env.JWT_SECRET || 'fallback_secret_key',
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      token,
+      user: { id: newUser._id, name: newUser.name, email: newUser.email },
+    });
   } catch (err) {
-    console.error('Error fetching current user:', err.message);
-    res.status(500).json({ message: 'Server error while retrieving user session' });
+    console.error(err);
+    res.status(500).json({ message: 'Server error during signup' });
+  }
+});
+
+// Login Route
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    // Create JWT Token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'fallback_secret_key',
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error during login' });
   }
 });
 
