@@ -1,52 +1,59 @@
-import { createContext, useState, useEffect, useContext } from 'react';
-import API from '../utils/api';
+// src/context/AuthContext.jsx
+import { createContext, useContext, useState } from 'react';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (token) {
-      localStorage.setItem('token', token);
-      // Fetch user profile if needed or decode stored user
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(() => {
+    try {
       const storedUser = localStorage.getItem('user');
-      if (storedUser) setUser(JSON.parse(storedUser));
-    } else {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setUser(null);
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      return null;
     }
-    setLoading(false);
-  }, [token]);
+  });
 
-  const login = async (email, password) => {
-    const res = await API.post('/auth/login', { email, password });
-    setToken(res.data.token);
-    setUser(res.data.user);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-    return res.data;
+  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+
+  const login = async (email) => {
+    // Replace with your actual backend API call later
+    // const res = await axios.post('/api/auth/login', { email, password });
+    const mockUser = { email, name: 'Engineering Student' };
+    const mockToken = 'sample-jwt-token';
+
+    setUser(mockUser);
+    setToken(mockToken);
+    localStorage.setItem('user', JSON.stringify(mockUser));
+    localStorage.setItem('token', mockToken);
   };
 
-  const signup = async (name, email, password) => {
-    const res = await API.post('/auth/signup', { name, email, password });
-    return res.data;
+  const signup = async (name, email) => {
+    // Replace with your actual backend API call later
+    // const res = await axios.post('/api/auth/signup', { name, email, password });
+    const mockUser = { name, email };
+    const mockToken = 'sample-jwt-token';
+
+    setUser(mockUser);
+    setToken(mockToken);
+    localStorage.setItem('user', JSON.stringify(mockUser));
+    localStorage.setItem('token', mockToken);
   };
 
   const logout = () => {
-    setToken('');
     setUser(null);
-    localStorage.removeItem('token');
+    setToken(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
- return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
-      {!loading && children}
+  return (
+    <AuthContext.Provider value={{ user, token, login, signup, logout }}>
+      {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAuth() {
+  return useContext(AuthContext);
+}
