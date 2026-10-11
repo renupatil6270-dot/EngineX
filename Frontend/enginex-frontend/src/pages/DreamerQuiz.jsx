@@ -1,19 +1,72 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import API from '../utils/api';
+
+const initialAnswers = {
+  interestedDomain: '',
+  specialization: '',
+  targetRoles: '',
+  desiredSkills: '',
+  acquiredSkills: '',
+  primaryGoal: '',
+  timelineMonths: 6,
+};
+
+function splitItems(value) {
+  return value.split(',').map((item) => item.trim()).filter(Boolean);
+}
 
 export default function DreamerQuiz() {
+  const [answers, setAnswers] = useState(initialAnswers);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+
+  const handleChange = (event) => {
+    setAnswers((current) => ({ ...current, [event.target.name]: event.target.value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      await API.post('/quiz/submit', {
+        portalType: 'dreamer',
+        answers: {
+          ...answers,
+          targetRoles: splitItems(answers.targetRoles),
+          desiredSkills: splitItems(answers.desiredSkills),
+          acquiredSkills: splitItems(answers.acquiredSkills),
+          timelineMonths: Number(answers.timelineMonths),
+        },
+      });
+      navigate('/roadmap');
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Unable to generate your roadmap');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-8 flex flex-col items-center justify-center">
-      <h1 className="text-3xl font-bold mb-4 text-teal-400">Dreamer Quiz</h1>
-      <p className="text-slate-400 mb-6 max-w-md text-center">
-        Explore engineering paths and stream preferences aligned with your interests.
-      </p>
-      <Link 
-        to="/portals" 
-        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm transition-colors"
-      >
-        ← Back to Portals
-      </Link>
-    </div>
+    <main className="form-page">
+      <div className="form-card">
+        <h1>Dreamer Quiz</h1>
+        <p className="form-intro">Tell us where you want to go so EngineX can create a practical learning roadmap.</p>
+        {error && <div className="error-msg">{error}</div>}
+        <form onSubmit={handleSubmit} className="quiz-form">
+          <label>Interested domain<input name="interestedDomain" value={answers.interestedDomain} onChange={handleChange} required placeholder="Computer Science" /></label>
+          <label>Specialization<input name="specialization" value={answers.specialization} onChange={handleChange} placeholder="Artificial Intelligence" /></label>
+          <label>Target roles <span className="hint">(comma separated)</span><input name="targetRoles" value={answers.targetRoles} onChange={handleChange} placeholder="ML Engineer, Data Scientist" /></label>
+          <label>Desired skills <span className="hint">(comma separated)</span><input name="desiredSkills" value={answers.desiredSkills} onChange={handleChange} placeholder="Python, Machine Learning" /></label>
+          <label>Acquired skills <span className="hint">(comma separated)</span><input name="acquiredSkills" value={answers.acquiredSkills} onChange={handleChange} placeholder="JavaScript, HTML" /></label>
+          <label>Primary goal<textarea name="primaryGoal" value={answers.primaryGoal} onChange={handleChange} placeholder="Get an internship" rows="3" /></label>
+          <label>Timeline: {answers.timelineMonths} months<input type="range" name="timelineMonths" min="1" max="60" value={answers.timelineMonths} onChange={handleChange} /></label>
+          <button type="submit" className="auth-btn" disabled={submitting}>{submitting ? 'Generating roadmap...' : 'Generate roadmap'}</button>
+        </form>
+        <Link to="/portals" className="back-link">Back to portals</Link>
+      </div>
+    </main>
   );
 }

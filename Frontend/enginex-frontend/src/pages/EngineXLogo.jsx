@@ -1,4 +1,3 @@
-import React from 'react';
 export default function EngineXLogo({ size = 40, showText = true, className = '' }) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>

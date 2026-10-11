@@ -1,52 +1,52 @@
-import { createContext, useState, useEffect, useContext } from 'react';
+import { useEffect, useState } from 'react';
 import API from '../utils/api';
+import { AuthContext } from './contextStore';
 
-const AuthContext = createContext();
+function readStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null');
+  } catch {
+    localStorage.removeItem('user');
+    return null;
+  }
+}
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
-  const [loading, setLoading] = useState(true);
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(readStoredUser);
+  const [token, setToken] = useState(() => localStorage.getItem('token') || '');
 
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
-      // Fetch user profile if needed or decode stored user
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) setUser(JSON.parse(storedUser));
+      if (user) localStorage.setItem('user', JSON.stringify(user));
     } else {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      setUser(null);
     }
-    setLoading(false);
-  }, [token]);
+  }, [token, user]);
 
-  const login = async (email, password) => {
-    const res = await API.post('/auth/login', { email, password });
-    setToken(res.data.token);
-    setUser(res.data.user);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-    return res.data;
+  const authenticate = (data) => {
+    setToken(data.token);
+    setUser(data.user);
+    return data;
   };
 
-  const signup = async (name, email, password) => {
-    const res = await API.post('/auth/signup', { name, email, password });
-    return res.data;
-  };
+  const login = async (email, password) => authenticate(
+    (await API.post('/auth/login', { email, password })).data,
+  );
+
+  const signup = async (name, email, password) => authenticate(
+    (await API.post('/auth/signup', { name, email, password })).data,
+  );
 
   const logout = () => {
     setToken('');
     setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
   };
 
- return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
-      {!loading && children}
+  return (
+    <AuthContext.Provider value={{ user, token, loading: false, login, signup, logout }}>
+      {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => useContext(AuthContext);
+}

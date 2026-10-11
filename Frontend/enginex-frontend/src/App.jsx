@@ -1,13 +1,21 @@
 // src/App.jsx
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 import Navbar from './Components/Navbar';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import PortalSelection from './pages/PortalSelection';
 import DreamerQuiz from './pages/DreamerQuiz';
+import AchieverDashboard from './pages/AchieverDashboard';
+import InnovatorHub from './pages/InnovatorHub';
+import Roadmap from './pages/Roadmap';
 import ProtectedRoute from './Components/ProtectedRoute';
+
+function RootRedirect() {
+  const { token } = useAuth();
+  return <Navigate to={token ? '/portals' : '/login'} replace />;
+}
 
 export default function App() {
   return (
@@ -36,9 +44,12 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/achiever-dashboard" element={<ProtectedRoute><AchieverDashboard /></ProtectedRoute>} />
+          <Route path="/innovator-hub" element={<ProtectedRoute><InnovatorHub /></ProtectedRoute>} />
+          <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
 
           {/* Default Fallback */}
-          <Route path="*" element={<Navigate to="/portals" replace />} />
+          <Route path="*" element={<RootRedirect />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
