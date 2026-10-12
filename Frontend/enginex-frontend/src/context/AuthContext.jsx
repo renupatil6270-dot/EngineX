@@ -1,5 +1,5 @@
-// src/context/AuthContext.jsx
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import API from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -12,32 +12,34 @@ export function AuthProvider({ children }) {
       return null;
     }
   });
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [loading, setLoading] = useState(Boolean(token));
 
-  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  useEffect(() => {
+    if (!token) return;
+    API.get('/auth/me')
+      .then(({ data }) => {
+        setUser(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      })
+      .catch(() => {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      })
+      .finally(() => setLoading(false));
+  }, [token]);
 
-  const login = async (email) => {
-    // Replace with your actual backend API call later
-    // const res = await axios.post('/api/auth/login', { email, password });
-    const mockUser = { email, name: 'Engineering Student' };
-    const mockToken = 'sample-jwt-token';
-
-    setUser(mockUser);
-    setToken(mockToken);
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    localStorage.setItem('token', mockToken);
+  const authenticate = ({ user: authenticatedUser, token: authenticatedToken }) => {
+    setUser(authenticatedUser);
+    setToken(authenticatedToken);
+    localStorage.setItem('user', JSON.stringify(authenticatedUser));
+    localStorage.setItem('token', authenticatedToken);
   };
 
-  const signup = async (name, email) => {
-    // Replace with your actual backend API call later
-    // const res = await axios.post('/api/auth/signup', { name, email, password });
-    const mockUser = { name, email };
-    const mockToken = 'sample-jwt-token';
-
-    setUser(mockUser);
-    setToken(mockToken);
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    localStorage.setItem('token', mockToken);
-  };
+  const login = async (email, password) => authenticate((await API.post('/auth/login', { email, password })).data);
+  const signup = async (name, email, password) => authenticate((await API.post('/auth/signup', { name, email, password })).data);
 
   const logout = () => {
     setUser(null);
@@ -46,11 +48,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
   };
 
-  return (
-    <AuthContext.Provider value={{ user, token, login, signup, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>{children}</AuthContext.Provider>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

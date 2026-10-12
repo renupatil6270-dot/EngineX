@@ -18,7 +18,7 @@ export default function PortalSelection() {
       title: 'Achiever Portal',
       description: 'Access study resources, roadmap guides, semester trackers, and subject roadmaps.',
       icon: '🎯',
-      route: '/achiever-dashboard',
+      route: null,
       badge: 'Active',
     },
     {
@@ -26,7 +26,7 @@ export default function PortalSelection() {
       title: 'Innovator Portal',
       description: 'Discover hackathons, open source projects, and project collaboration opportunities.',
       icon: '💡',
-      route: '/innovator-hub',
+      route: null,
       badge: 'New',
     },
   ];
@@ -43,7 +43,7 @@ export default function PortalSelection() {
           <div
             key={portal.id}
             className="portal-card"
-            onClick={() => navigate(portal.route)}
+            onClick={() => portal.route && navigate(portal.route)}
           >
             <div className="portal-card-top">
               <span className="portal-icon">{portal.icon}</span>
