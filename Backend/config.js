@@ -1,6 +1,6 @@
 const dotenv = require('dotenv');
 
-dotenv.config();
+dotenv.config({ path: process.env.DOTENV_CONFIG_PATH || '.env' });
 
 const required = (name) => {
   const value = process.env[name];

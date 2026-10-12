@@ -10,6 +10,7 @@ test('configuration rejects missing secrets instead of using fallbacks', () => {
     () => execFileSync(process.execPath, ['-e', "delete process.env.MONGODB_URI; delete process.env.JWT_SECRET; require('./config')"], {
       cwd: backendDirectory,
       encoding: 'utf8',
+      env: { ...process.env, DOTENV_CONFIG_PATH: 'missing-test.env' },
     }),
     /MONGODB_URI is required/,
   );
