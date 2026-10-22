@@ -7,6 +7,8 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import PortalSelection from './pages/PortalSelection';
 import DreamerQuiz from './pages/DreamerQuiz';
+import AchieverQuiz from './pages/AchieverQuiz';
+import InnovatorQuiz from './pages/InnovatorQuiz';
 import ProtectedRoute from './Components/ProtectedRoute';
 
 export default function App() {
@@ -36,6 +38,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/achiever-quiz" element={<ProtectedRoute><AchieverQuiz /></ProtectedRoute>} />
+          <Route path="/innovator-quiz" element={<ProtectedRoute><InnovatorQuiz /></ProtectedRoute>} />
 
           {/* Default Fallback */}
           <Route path="*" element={<Navigate to="/portals" replace />} />

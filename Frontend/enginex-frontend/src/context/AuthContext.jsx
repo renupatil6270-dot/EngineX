@@ -1,11 +1,8 @@
 // src/context/AuthContext.jsx
 import { createContext, useContext, useState } from 'react';
-import axios from 'axios';
+import API from '../utils/api';
 
 const AuthContext = createContext(null);
-
-// Configure default base URL for your backend API
-axios.defaults.baseURL = 'http://localhost:5000';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -21,7 +18,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/api/auth/login', { email, password });
+      const response = await API.post('/auth/login', { email, password });
       const { token: jwtToken, user: userData } = response.data;
 
       setUser(userData);
@@ -29,13 +26,13 @@ export function AuthProvider({ children }) {
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('token', jwtToken);
     } catch (error) {
-      throw error.response?.data?.message || 'Login failed';
+      throw new Error(error.response?.data?.message || 'Login failed');
     }
   };
 
   const signup = async (name, email, password) => {
     try {
-      const response = await axios.post('/api/auth/signup', { name, email, password });
+      const response = await API.post('/auth/signup', { name, email, password });
       const { token: jwtToken, user: userData } = response.data;
 
       setUser(userData);
@@ -43,7 +40,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('token', jwtToken);
     } catch (error) {
-      throw error.response?.data?.message || 'Signup failed';
+      throw new Error(error.response?.data?.message || 'Signup failed');
     }
   };
 

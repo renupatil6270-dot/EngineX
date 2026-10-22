@@ -2,38 +2,48 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Quiz = require('../models/Quiz');
-const axios = require('axios');
+const portalFields = {
+    dreamer: ['targetRole', 'currentSkillLevel', 'preferredLanguage', 'timeCommitmentHours'],
+    achiever: ['currentSemester', 'weakSubjectAreas', 'examTargetGoals', 'prepStrategyPreference'],
+    innovator: ['domainInterest', 'techStackProficiency', 'projectIdeaScope', 'hackathonTimeline'],
+};
 
 // POST /api/quiz/submit
 router.post('/submit', auth, async (req, res) => {
     try {
         const { portalType, answers } = req.body;
+        const requiredFields = portalFields[String(portalType || '').toLowerCase()];
+
+        if (!requiredFields || !answers || typeof answers !== 'object') {
+            return res.status(400).json({
+                error: 'A valid portalType and answers object are required'
+            });
+        }
+
+        const missingFields = requiredFields.filter(
+            (field) =>
+                answers[field] === undefined ||
+                answers[field] === null ||
+                String(answers[field]).trim() === ''
+        );
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({
+                error: `Missing required answer fields: ${missingFields.join(', ')}`,
+            });
+        }
 
         // 1. Save submission to MongoDB
         const quizResult = new Quiz({
-            userId: req.user.id,
-            portalType,
+            userId: req.user.userId,
+            portalType: String(portalType).toLowerCase(),
             answers
         });
         await quizResult.save();
 
-        // 2. Pass quiz profile to Member 3's AI service for roadmap generation
-        let aiResponse = null;
-        try {
-            const response = await axios.post(process.env.AI_SERVICE_URL, {
-                userId: req.user.id,
-                portalType,
-                answers
-            });
-            aiResponse = response.data;
-        } catch (aiErr) {
-            console.warn('AI Service unavailable, saved to DB only:', aiErr.message);
-        }
-
         res.status(201).json({
             message: 'Quiz submitted successfully',
             quizId: quizResult._id,
-            roadmap: aiResponse
         });
 
     } catch (err) {

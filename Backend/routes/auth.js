@@ -5,10 +5,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'development_secret_change_me';
+
 // Signup Route
 router.post('/signup', async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
 
     // Check if user already exists
     let existingUser = await User.findOne({ email });
@@ -32,7 +38,7 @@ router.post('/signup', async (req, res) => {
     // Create JWT Token
     const token = jwt.sign(
       { userId: newUser._id, email: newUser.email },
-      process.env.JWT_SECRET || 'fallback_secret_key',
+      JWT_SECRET,
       { expiresIn: '7d' }
     );
 
@@ -51,6 +57,10 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
@@ -66,7 +76,7 @@ router.post('/login', async (req, res) => {
     // Create JWT Token
     const token = jwt.sign(
       { userId: user._id, email: user.email },
-      process.env.JWT_SECRET || 'fallback_secret_key',
+      JWT_SECRET,
       { expiresIn: '7d' }
     );
 

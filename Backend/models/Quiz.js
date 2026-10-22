@@ -8,17 +8,12 @@ const quizSchema = new mongoose.Schema({
   },
   portalType: {
     type: String,
-    enum: ['dreamer', 'pursuer'],
+    enum: ['dreamer', 'achiever', 'innovator'],
     required: true
   },
   answers: {
-    interestedDomain: { type: String, required: true },
-    specialization: { type: String },
-    targetRoles: [{ type: String }],
-    desiredSkills: [{ type: String }],
-    acquiredSkills: [{ type: String }],
-    primaryGoal: { type: String },
-    timelineMonths: { type: Number }
+    type: mongoose.Schema.Types.Mixed,
+    required: true
   },
   createdAt: {
     type: Date,

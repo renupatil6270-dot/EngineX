@@ -1,0 +1,10 @@
+{
+  "description": "Connects users as dreamers or receivers, assesses coding skills through quizzes, identifies gaps, and provides personalized tech learning roadmaps.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

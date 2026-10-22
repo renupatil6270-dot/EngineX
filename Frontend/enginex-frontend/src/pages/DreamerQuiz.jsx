@@ -1,18 +1,12 @@
-import { Link } from 'react-router-dom';
+import PortalQuiz from '../components/PortalQuiz';
+
+const questions = [
+  { id: 'targetRole', eyebrow: '01 / Direction', title: 'What do you want to build?', description: 'Choose the role that feels most exciting right now.', options: ['Frontend Engineer', 'Backend Engineer', 'Data Scientist', 'Product Designer'] },
+  { id: 'currentSkillLevel', eyebrow: '02 / Experience', title: 'Where are you on your journey?', description: 'We will tune the roadmap to your current experience.', options: ['Just getting started', 'Comfortable with the basics', 'Building real projects', 'Ready for advanced work'] },
+  { id: 'preferredLanguage', eyebrow: '03 / Toolkit', title: 'Which language do you prefer?', description: 'Your preference shapes the examples and project ideas.', options: ['JavaScript', 'Python', 'Java', 'I am open to suggestions'] },
+  { id: 'timeCommitmentHours', eyebrow: '04 / Momentum', title: 'How much time can you commit weekly?', description: 'A realistic pace makes a roadmap easier to follow.', options: ['2–4 hours', '5–8 hours', '9–12 hours', '12+ hours'] },
+];
 
 export default function DreamerQuiz() {
-  return (
-    <div className="min-h-screen bg-slate-950 text-white p-8 flex flex-col items-center justify-center">
-      <h1 className="text-3xl font-bold mb-4 text-teal-400">Dreamer Quiz</h1>
-      <p className="text-slate-400 mb-6 max-w-md text-center">
-        Explore engineering paths and stream preferences aligned with your interests.
-      </p>
-      <Link 
-        to="/portals" 
-        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm transition-colors"
-      >
-        ← Back to Portals
-      </Link>
-    </div>
-  );
+  return <PortalQuiz portalType="dreamer" eyebrow="Dreamer path finder" title="Find your next direction." description="Explore a stream and skill roadmap aligned with your goals." questions={questions} />;
 }
