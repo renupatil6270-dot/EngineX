@@ -29,7 +29,10 @@ function RoadmapView({ roadmap }) {
               <div className="rounded-2xl border border-slate-700/70 bg-slate-900/60 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <h2 className="text-lg font-bold text-slate-100">{phase.phaseName}</h2>
-                  <span className="rounded-full border border-teal-300/30 bg-teal-300/10 px-3 py-1 text-xs font-semibold text-teal-200">{phase.duration}</span>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <span className="rounded-full border border-teal-300/30 bg-teal-300/10 px-3 py-1 text-xs font-semibold text-teal-200">{phase.duration}</span>
+                    <span className="rounded-full border border-blue-300/30 bg-blue-300/10 px-3 py-1 text-xs font-semibold text-blue-200">Target: {phase.targetDate}</span>
+                  </div>
                 </div>
                 <div className="mt-5 grid gap-5 sm:grid-cols-2">
                   <RoadmapList title="Topics" items={phase.topics} marker="•" markerClass="text-teal-300" />
@@ -66,7 +69,10 @@ export default function PortalQuiz({ portalType, eyebrow, title, description, qu
       const response = await API.post('/ai/generate-roadmap', { portalType, ...answers }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setRoadmap(response.data);
+      if (!response.data?.success || !response.data.roadmap) {
+        throw new Error('The server returned an invalid roadmap response.');
+      }
+      setRoadmap(response.data.roadmap);
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Unable to generate your roadmap. Please try again.');
     } finally {

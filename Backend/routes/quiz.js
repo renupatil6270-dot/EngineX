@@ -3,9 +3,9 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const Quiz = require('../models/Quiz');
 const portalFields = {
-    dreamer: ['targetRole', 'currentSkillLevel', 'preferredLanguage', 'timeCommitmentHours'],
-    achiever: ['currentSemester', 'weakSubjectAreas', 'examTargetGoals', 'prepStrategyPreference'],
-    innovator: ['domainInterest', 'techStackProficiency', 'projectIdeaScope', 'hackathonTimeline'],
+    dreamer: ['domain', 'careerGoal', 'experience', 'hoursPerWeek'],
+    achiever: ['targetExam', 'targetDate', 'hoursPerWeek', 'weakAreas'],
+    innovator: ['projectType', 'techStack', 'teamSize', 'projectGoal'],
 };
 
 // POST /api/quiz/submit
@@ -35,7 +35,7 @@ router.post('/submit', auth, async (req, res) => {
 
         // 1. Save submission to MongoDB
         const quizResult = new Quiz({
-            userId: req.user.userId,
+            user: req.user.id,
             portalType: String(portalType).toLowerCase(),
             answers
         });

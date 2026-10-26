@@ -12,6 +12,10 @@ module.exports = function authMiddleware(req, res, next) {
 
   try {
     req.user = jwt.verify(token, JWT_SECRET);
+    req.user.id = req.user.id || req.user.userId;
+    if (!req.user.id) {
+      return res.status(401).json({ message: 'Token does not identify a user' });
+    }
     next();
   } catch (error) {
     res.status(401).json({ message: 'Token is invalid or expired' });

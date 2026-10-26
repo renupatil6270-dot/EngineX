@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('token', jwtToken);
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+      throw new Error(error.response?.data?.message || 'Login failed', { cause: error });
     }
   };
 
@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('token', jwtToken);
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Signup failed');
+      throw new Error(error.response?.data?.message || 'Signup failed', { cause: error });
     }
   };
 

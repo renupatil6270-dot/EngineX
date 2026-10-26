@@ -25,6 +25,10 @@ app.use('/api/ai', aiRoutes);
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/enginex';
 
+if (!process.env.GEMINI_API_KEY) {
+  console.error('GEMINI_API_KEY is undefined. Roadmap generation will be unavailable.');
+}
+
 async function startServer() {
   try {
     await mongoose.connect(MONGO_URI);

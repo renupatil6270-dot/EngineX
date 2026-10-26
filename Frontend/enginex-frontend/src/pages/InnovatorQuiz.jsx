@@ -1,10 +1,10 @@
 import PortalQuiz from '../components/PortalQuiz';
 
 const questions = [
-  { id: 'domainInterest', eyebrow: '01 / Domain', title: 'What do you want to explore?', description: 'Your domain interest will shape the project ideas and learning stack.', options: ['Artificial intelligence', 'Web3 and blockchain', 'Cloud and DevOps', 'Robotics and IoT'] },
-  { id: 'techStackProficiency', eyebrow: '02 / Stack', title: 'How comfortable are you with your stack?', description: 'This helps us balance learning new tools with building quickly.', options: ['Beginner', 'Comfortable with one stack', 'Full-stack builder', 'Advanced and specialized'] },
-  { id: 'projectIdeaScope', eyebrow: '03 / Scope', title: 'What kind of project do you want to ship?', description: 'Start with a scope you can validate and demonstrate.', options: ['A focused weekend prototype', 'A polished portfolio project', 'A team-based MVP', 'A scalable product concept'] },
-  { id: 'hackathonTimeline', eyebrow: '04 / Timeline', title: 'When is your next hackathon or launch?', description: 'We will work backward from your deadline to define milestones.', options: ['This weekend', 'Within one month', 'Within three months', 'No deadline yet'] },
+  { id: 'projectType', eyebrow: '01 / Project', title: 'What kind of project do you want to ship?', description: 'The project type shapes the architecture and build phases.', options: ['Web application', 'Mobile application', 'AI or data product', 'Developer tool or API'] },
+  { id: 'techStack', eyebrow: '02 / Stack', title: 'Which technology stack will you use?', description: 'The roadmap will use this stack for implementation examples.', options: ['MERN', 'Python and FastAPI', 'Java and Spring', 'I need stack guidance'] },
+  { id: 'teamSize', eyebrow: '03 / Team', title: 'How large is your team?', description: 'Team size affects ownership, collaboration, and delivery milestones.', options: ['Solo builder', '2–3 people', '4–6 people', 'More than 6 people'] },
+  { id: 'projectGoal', eyebrow: '04 / Outcome', title: 'What is the project goal?', description: 'A clear outcome helps turn the idea into an MVP and launch plan.', options: ['Validate an idea', 'Build a portfolio project', 'Launch a startup MVP', 'Win a hackathon'] },
 ];
 
 export default function InnovatorQuiz() {

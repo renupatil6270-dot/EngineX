@@ -1,19 +1,22 @@
 const express = require('express');
 const { GoogleGenAI } = require('@google/genai');
 const auth = require('../middleware/auth');
+const Quiz = require('../models/Quiz');
+const Roadmap = require('../models/Roadmap');
 
 const router = express.Router();
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
 const portalFields = {
-  dreamer: ['targetRole', 'currentSkillLevel', 'preferredLanguage', 'timeCommitmentHours'],
-  achiever: ['currentSemester', 'weakSubjectAreas', 'examTargetGoals', 'prepStrategyPreference'],
-  innovator: ['domainInterest', 'techStackProficiency', 'projectIdeaScope', 'hackathonTimeline'],
+  dreamer: ['domain', 'careerGoal', 'experience', 'hoursPerWeek'],
+  achiever: ['targetExam', 'targetDate', 'hoursPerWeek', 'weakAreas'],
+  innovator: ['projectType', 'techStack', 'teamSize', 'projectGoal'],
 };
 
 const portalGuidance = {
-  dreamer: 'Focus on stream selection, software engineering skills, and a practical skill-building roadmap.',
-  achiever: 'Focus on academic performance, semester priorities, exam preparation, and study strategy.',
-  innovator: 'Focus on project execution, hackathon readiness, technical depth, and a shippable project plan.',
+  dreamer: 'Create a foundational, step-by-step skill acquisition timeline for a beginner or career switcher.',
+  achiever: 'Create a deadline-driven review schedule with milestone target dates leading to the target date.',
+  innovator: 'Create an architecture and build-phase roadmap covering MVP setup, backend routes, testing, and deployment.',
 };
 
 function cleanJsonResponse(text) {
@@ -36,6 +39,7 @@ function isRoadmap(value) {
           phase &&
           typeof phase.phaseName === 'string' &&
           typeof phase.duration === 'string' &&
+          typeof phase.targetDate === 'string' &&
           Array.isArray(phase.topics) &&
           Array.isArray(phase.projects)
       )
@@ -84,6 +88,7 @@ The JSON must exactly follow this structure:
     {
       "phaseName": "Phase Name",
       "duration": "Duration",
+      "targetDate": "Milestone target date or week",
       "topics": ["Topic 1", "Topic 2"],
       "projects": ["Project 1"]
     }
@@ -100,7 +105,7 @@ Make the roadmap achievable, sequential, and specific. Include 3 to 5 phases. Ev
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: GEMINI_MODEL,
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -117,10 +122,30 @@ Make the roadmap achievable, sequential, and specific. Include 3 to 5 phases. Ev
       return res.status(502).json({ message: 'Gemini returned an invalid roadmap format' });
     }
 
-    return res.json(roadmap);
-  } catch (error) {
-    console.error('Roadmap generation failed:', error.message);
-    return res.status(502).json({
+    const quizResult = new Quiz({
+      user: req.user.id,
+      portalType: normalizedPortalType,
+      answers: Object.fromEntries(
+        requiredFields.map((field) => [field, req.body[field]])
+      ),
+    });
+    await quizResult.save();
+
+    const newRoadmap = new Roadmap({
+      userId: req.user.id,
+      portalType: normalizedPortalType,
+      aiResponse: roadmap,
+    });
+    await newRoadmap.save();
+
+    return res.status(201).json({
+      success: true,
+      roadmap,
+      roadmapId: newRoadmap._id,
+    });
+  } catch (aiError) {
+    console.error('Portal Roadmap Error:', normalizedPortalType, aiError);
+    return res.status(500).json({
       message: 'Unable to generate a roadmap right now. Please try again.',
     });
   }
