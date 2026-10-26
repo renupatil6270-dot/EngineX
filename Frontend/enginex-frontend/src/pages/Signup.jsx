@@ -3,106 +3,54 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// Example styling structure for Signup.jsx
 export default function Signup() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  const { signup } = useAuth();
-  const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      return setError('Passwords do not match');
-    }
-
-    try {
-      setSubmitting(true);
-      await signup(formData.name, formData.email, formData.password);
-      navigate('/portals');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create account');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h2>Create an account</h2>
-        <p className="auth-subtitle">Get started with EngineX</p>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl p-8 shadow-2xl">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-white tracking-tight">Create an Account</h2>
+          <p className="text-slate-400 text-sm mt-2">Get started with EngineX</p>
+        </div>
 
-        {error && <div className="error-msg">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              name="name"
-              placeholder="John Doe"
-              value={formData.name}
-              onChange={handleChange}
-              required
+        <form className="space-y-5">
+          <div>
+            <label className="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Full Name</label>
+            <input 
+              type="text" 
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+              placeholder="Enter your full name"
             />
           </div>
 
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              name="email"
+          <div>
+            <label className="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Email Address</label>
+            <input 
+              type="email" 
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
               placeholder="name@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
             />
           </div>
 
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
+          <div>
+            <label className="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Password</label>
+            <input 
+              type="password" 
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
               placeholder="••••••••"
-              value={formData.password}
-              onChange={handleChange}
-              required
             />
           </div>
 
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="••••••••"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <button type="submit" className="auth-btn" disabled={submitting}>
-            {submitting ? 'Creating Account...' : 'Create Account'}
+          <button 
+            type="submit" 
+            className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 rounded-lg transition-colors shadow-lg shadow-cyan-900/20"
+          >
+            Create Account
           </button>
         </form>
 
-        <p className="auth-footer">
-          Already have an account? <Link to="/login">Sign in</Link>
+        <p className="text-center text-sm text-slate-400 mt-6">
+          Already have an account? <a href="/login" className="text-cyan-400 hover:underline">Sign in</a>
         </p>
       </div>
     </div>

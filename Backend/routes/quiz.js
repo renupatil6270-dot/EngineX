@@ -2,7 +2,10 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Quiz = require('../models/Quiz');
-const axios = require('axios');
+const { GoogleGenAI } = require('@google/genai');
+
+// Initialize Gemini Client
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // POST /api/quiz/submit
 router.post('/submit', auth, async (req, res) => {
@@ -17,28 +20,34 @@ router.post('/submit', auth, async (req, res) => {
         });
         await quizResult.save();
 
-        // 2. Pass quiz profile to Member 3's AI service for roadmap generation
+        // 2. Generate Roadmap with Gemini
         let aiResponse = null;
         try {
-            const response = await axios.post(process.env.AI_SERVICE_URL, {
-                userId: req.user.id,
-                portalType,
-                answers
+            const prompt = `Generate a structured step-by-step learning roadmap for a ${portalType} learner with these preferences: ${JSON.stringify(answers)}. Return raw JSON only with keys: title, description, and steps (array of { phase, topics, project }).`;
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-3.8-flash',
+                contents: prompt,
             });
-            aiResponse = response.data;
-        } catch (aiErr) {
-            console.warn('AI Service unavailable, saved to DB only:', aiErr.message);
+
+            let text = response.text;
+            // Clean potential markdown blocks
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            aiResponse = JSON.parse(text);
+
+        } catch (aiError) {
+            console.error('Gemini call failed:', aiError);
         }
 
-        res.status(201).json({
-            message: 'Quiz submitted successfully',
-            quizId: quizResult._id,
+        res.json({
+            success: true,
+            quizResult,
             roadmap: aiResponse
         });
 
-    } catch (err) {
-        console.error('Quiz Error:', err.message);
-        res.status(500).json({ error: 'Failed to process quiz submission' });
+    } catch (error) {
+        console.error('Quiz submission error:', error);
+        res.status(500).json({ error: 'Server error during submission' });
     }
 });
 
