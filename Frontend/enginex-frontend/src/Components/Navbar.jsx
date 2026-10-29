@@ -7,6 +7,22 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const getPortalTitle = () => {
+    const path = location.pathname.toLowerCase();
+    if (path.includes('dreamer')) return 'Dreamer Quiz';
+    if (path.includes('achiever')) return 'Achiever Quiz';
+    if (path.includes('innovator')) return 'Innovator Quiz';
+    return 'Dashboard';
+  };
+
+  const getPortalPath = () => {
+    const path = location.pathname.toLowerCase();
+    if (path.includes('dreamer')) return '/dreamer-quiz';
+    if (path.includes('achiever')) return '/achiever-quiz';
+    if (path.includes('innovator')) return '/innovator-quiz';
+    return '/portals';
+  };
+
   // Do not render Navbar if the user is not logged in
   if (!user) return null;
 
@@ -31,10 +47,10 @@ export default function Navbar() {
             Portals
           </Link>
           <Link
-            to="/dreamer-quiz"
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${location.pathname === '/dreamer-quiz' ? 'bg-slate-800 text-teal-300' : 'text-slate-400 hover:text-slate-100'}`}
+            to={getPortalPath()}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${getPortalPath() === location.pathname ? 'bg-slate-800 text-teal-300' : 'text-slate-400 hover:text-slate-100'}`}
           >
-            Dreamer quiz
+            {getPortalTitle()}
           </Link>
         </div>
 

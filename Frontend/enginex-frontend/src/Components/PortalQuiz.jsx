@@ -66,7 +66,7 @@ export default function PortalQuiz({ portalType, eyebrow, title, description, qu
     setLoading(true);
     setError('');
     try {
-      const response = await API.post('/ai/generate-roadmap', { portalType, ...answers }, {
+      const response = await API.post('/quiz/submit', { portalType, answers }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.data?.success || !response.data.roadmap) {

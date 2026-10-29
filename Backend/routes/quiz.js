@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Quiz = require('../models/Quiz');
+const Roadmap = require('../models/Roadmap');
+const aiRoutes = require('./ai');
 const portalFields = {
     dreamer: ['domain', 'careerGoal', 'experience', 'hoursPerWeek'],
     achiever: ['targetExam', 'targetDate', 'hoursPerWeek', 'weakAreas'],
@@ -33,22 +35,34 @@ router.post('/submit', auth, async (req, res) => {
             });
         }
 
-        // 1. Save submission to MongoDB
+        const normalizedPortalType = String(portalType).toLowerCase();
         const quizResult = new Quiz({
             user: req.user.id,
-            portalType: String(portalType).toLowerCase(),
+            portalType: normalizedPortalType,
             answers
         });
         await quizResult.save();
 
-        res.status(201).json({
-            message: 'Quiz submitted successfully',
+        const roadmap = await aiRoutes.generateRoadmapContent(normalizedPortalType, answers);
+        const roadmapResult = new Roadmap({
+            userId: req.user.id,
+            portalType: normalizedPortalType,
+            aiResponse: roadmap,
+        });
+        await roadmapResult.save();
+
+        return res.status(201).json({
+            success: true,
+            roadmap,
+            roadmapId: roadmapResult._id,
             quizId: quizResult._id,
         });
-
     } catch (err) {
-        console.error('Quiz Error:', err.message);
-        res.status(500).json({ error: 'Failed to process quiz submission' });
+        console.error('Quiz submission error:', err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || 'Failed to process quiz submission',
+        });
     }
 });
 
