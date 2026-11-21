@@ -1,16 +1,37 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/api';
-import { useAuth } from '../context/AuthContext';
 
-function RoadmapList({ title, items, marker, markerClass, phaseIndex, completedTopicIds, onToggleTopic, savingTopic }) {
+function RoadmapList({
+  title,
+  items = [],
+  marker,
+  markerClass,
+  phaseIndex,
+  completedTopicIds = [],
+  onToggleTopic,
+  savingTopic,
+  checkpointKind = 'topic',
+}) {
   return (
     <div>
       <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">{title}</h3>
       <ul className="mt-3 space-y-2 text-sm text-slate-300">
         {items.map((item, topicIndex) => {
-          const topicId = `phase-${phaseIndex}-topic-${topicIndex}`;
-          const completed = completedTopicIds.includes(topicId);
+          const topicId = `phase-${phaseIndex}-${checkpointKind}-${topicIndex}`;
+          const completed = onToggleTopic
+            ? Array.isArray(completedTopicIds) && completedTopicIds.includes(topicId)
+            : false;
+          if (!onToggleTopic) {
+            return (
+              <li key={topicId} className="flex items-start gap-2 rounded-lg px-2 py-1">
+                <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-[10px] ${markerClass}`}>
+                  {marker}
+                </span>
+                {item}
+              </li>
+            );
+          }
           return (
             <li key={topicId}>
               <button
@@ -35,7 +56,15 @@ function RoadmapList({ title, items, marker, markerClass, phaseIndex, completedT
 
 function RoadmapView({ roadmapState }) {
   const { roadmap, roadmapId } = roadmapState;
-  const [progress, setProgress] = useState(roadmapState.progress);
+  const [progress, setProgress] = useState({
+    ...(roadmapState.progress || {}),
+    completedTopicIds: roadmapState.progress?.completedTopicIds || [],
+    completionPercentage: roadmapState.progress?.completionPercentage || 0,
+    completedTopics: roadmapState.progress?.completedTopics || 0,
+    totalTopics: roadmapState.progress?.totalTopics || 0,
+    weeklyTarget: roadmapState.progress?.weeklyTarget || 0,
+    learningSpeed: roadmapState.progress?.learningSpeed || 0,
+  });
   const [savingTopic, setSavingTopic] = useState('');
   const [error, setError] = useState('');
 
@@ -44,7 +73,10 @@ function RoadmapView({ roadmapState }) {
     setError('');
     try {
       const response = await API.patch(`/roadmaps/${roadmapId}/topics/${topicId}`, { completed });
-      setProgress(response.data.progress);
+      setProgress({
+        ...(response.data.progress || {}),
+        completedTopicIds: response.data.progress?.completedTopicIds || [],
+      });
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Unable to update roadmap progress.');
     } finally {
@@ -54,7 +86,13 @@ function RoadmapView({ roadmapState }) {
 
   return (
     <main className="mx-auto min-h-[calc(100vh-4.5rem)] max-w-5xl px-4 py-10 sm:px-8 sm:py-16">
-      <Link to="/portals" className="text-sm font-medium text-slate-400 transition-colors hover:text-teal-300">← Back to portals</Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link to="/portals" className="text-sm font-medium text-slate-400 transition-colors hover:text-teal-300">Switch portal</Link>
+        <div className="flex gap-2">
+          <Link to="/profile" className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 hover:border-teal-300/50">View Profile</Link>
+          <Link to="/dashboard" className="primary-button px-4 py-2 text-sm">Open in Dashboard</Link>
+        </div>
+      </div>
       <section className="glass-card mt-6 rounded-3xl p-6 sm:p-10">
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-teal-300">Your personalized roadmap</p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-100 sm:text-4xl">{roadmap.title}</h1>
@@ -80,7 +118,7 @@ function RoadmapView({ roadmapState }) {
                 </div>
                 <div className="mt-5 grid gap-5 sm:grid-cols-2">
                   <RoadmapList title="Topics" items={phase.topics} marker="•" markerClass="text-teal-300" phaseIndex={index} completedTopicIds={progress.completedTopicIds} onToggleTopic={toggleTopic} savingTopic={savingTopic} />
-                  <RoadmapList title="Projects" items={phase.projects} marker="◆" markerClass="text-blue-300" />
+                  <RoadmapList title="Projects" items={phase.projects} marker="◆" markerClass="text-blue-300" phaseIndex={index} completedTopicIds={progress.completedTopicIds} onToggleTopic={toggleTopic} savingTopic={savingTopic} checkpointKind="project" />
                 </div>
               </div>
             </article>
@@ -97,7 +135,6 @@ export default function PortalQuiz({ portalType, eyebrow, title, description, qu
   const [roadmap, setRoadmap] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { token } = useAuth();
   const question = questions[step];
   const selectedAnswer = answers[question.id];
 
@@ -110,9 +147,7 @@ export default function PortalQuiz({ portalType, eyebrow, title, description, qu
     setLoading(true);
     setError('');
     try {
-      const response = await API.post('/quiz/submit', { portalType, answers }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await API.post('/quiz/submit', { portalType, answers });
       if (!response.data?.success || !response.data.roadmap) {
         throw new Error('The server returned an invalid roadmap response.');
       }

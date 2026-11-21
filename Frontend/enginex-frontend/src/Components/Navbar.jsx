@@ -7,22 +7,6 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const getPortalTitle = () => {
-    const path = location.pathname.toLowerCase();
-    if (path.includes('dreamer')) return 'Dreamer Quiz';
-    if (path.includes('achiever')) return 'Achiever Quiz';
-    if (path.includes('innovator')) return 'Innovator Quiz';
-    return 'Dashboard';
-  };
-
-  const getPortalPath = () => {
-    const path = location.pathname.toLowerCase();
-    if (path.includes('dreamer')) return '/dreamer-quiz';
-    if (path.includes('achiever')) return '/achiever-quiz';
-    if (path.includes('innovator')) return '/innovator-quiz';
-    return '/portals';
-  };
-
   // Do not render Navbar if the user is not logged in
   if (!user) return null;
 
@@ -47,20 +31,24 @@ export default function Navbar() {
             Portals
           </Link>
           <Link
-            to={getPortalPath()}
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${getPortalPath() === location.pathname ? 'bg-slate-800 text-teal-300' : 'text-slate-400 hover:text-slate-100'}`}
+            to="/dashboard"
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${location.pathname === '/dashboard' ? 'bg-slate-800 text-teal-300' : 'text-slate-400 hover:text-slate-100'}`}
           >
-            {getPortalTitle()}
+            Dashboard
           </Link>
         </div>
 
         <div className="navbar-user flex items-center gap-3">
-          <div className="user-badge flex items-center gap-2 rounded-full border border-slate-700/80 bg-slate-900/70 py-1 pl-1 pr-3">
+          <Link
+            to="/profile"
+            aria-label="Open profile"
+            className={`user-badge flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 transition-colors ${location.pathname === '/profile' ? 'border-teal-300 bg-teal-300/10' : 'border-slate-700/80 bg-slate-900/70 hover:border-teal-300/50'}`}
+          >
             <span className="user-avatar flex h-8 w-8 items-center justify-center rounded-full bg-teal-300 text-sm font-bold text-slate-950">
               {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </span>
             <span className="user-name hidden text-sm font-medium text-slate-300 sm:inline">{user.name}</span>
-          </div>
+          </Link>
 
           <button onClick={handleLogout} className="rounded-lg border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-300 transition-colors hover:border-rose-400/50 hover:bg-rose-400/10 hover:text-rose-200">
             Logout

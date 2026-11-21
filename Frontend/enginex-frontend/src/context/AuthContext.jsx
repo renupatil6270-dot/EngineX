@@ -1,10 +1,21 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import API from '../utils/api';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const migrateLegacyToken = () => {
+    const token = localStorage.getItem('token');
+    const legacyToken = localStorage.getItem('authToken');
+    if (!token && legacyToken) {
+      localStorage.setItem('token', legacyToken);
+      localStorage.removeItem('authToken');
+      return legacyToken;
+    }
+    return token;
+  };
+
   const [user, setUser] = useState(() => {
     try {
       const storedUser = localStorage.getItem('user');
@@ -14,7 +25,17 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  const [token, setToken] = useState(migrateLegacyToken);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      setToken(null);
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
 
   const login = async (email, password) => {
     try {

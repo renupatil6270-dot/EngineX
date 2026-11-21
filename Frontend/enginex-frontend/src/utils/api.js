@@ -5,11 +5,34 @@ const API = axios.create({
 });
 
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const storedToken = localStorage.getItem('token');
+  const legacyToken = localStorage.getItem('authToken');
+  const token = storedToken || legacyToken;
   if (token) {
+    if (!storedToken) {
+      localStorage.setItem('token', token);
+      localStorage.removeItem('authToken');
+    }
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
+      window.dispatchEvent(new Event('auth:unauthorized'));
+
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login');
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default API;

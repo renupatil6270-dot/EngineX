@@ -1,7 +1,6 @@
 // backend/middleware/auth.js
 const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'development_secret_change_me';
+const { secret: JWT_SECRET } = require('../config/jwt');
 
 module.exports = function authMiddleware(req, res, next) {
   const [scheme, token] = (req.header('Authorization') || '').split(' ');

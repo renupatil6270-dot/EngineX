@@ -1,12 +1,70 @@
 const express = require('express');
 const auth = require('../middleware/auth');
 const Roadmap = require('../models/Roadmap');
+const Quiz = require('../models/Quiz');
+const User = require('../models/User');
 const {
   calculateRoadmapProgress,
   getRoadmapTopics,
+  getRoadmapCheckpoints,
 } = require('../services/roadmapProgress');
 
 const router = express.Router();
+
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const [user, quiz, roadmap] = await Promise.all([
+      User.findById(req.user.id).select('name email').lean(),
+      Quiz.findOne({ user: req.user.id }).sort({ createdAt: -1 }).lean(),
+      Roadmap.findOne({ userId: req.user.id }).sort({ createdAt: -1 }).lean(),
+    ]);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const completedTopicIds = (roadmap?.progress?.completedTopics || [])
+      .map((item) => item.topicId);
+    const progress = roadmap
+      ? calculateRoadmapProgress(
+          roadmap.aiResponse,
+          completedTopicIds,
+          Date.now(),
+          roadmap.createdAt
+        )
+      : {
+          completedTopicIds: [],
+          totalTopics: 0,
+          completedTopics: 0,
+          remainingTopics: 0,
+          completionPercentage: 0,
+          learningSpeed: 0,
+          weeklyTarget: 0,
+        };
+
+    return res.json({
+      user: { name: user.name, email: user.email },
+      quiz: quiz
+        ? { portalType: quiz.portalType, answers: quiz.answers, submittedAt: quiz.createdAt }
+        : null,
+      roadmap: roadmap
+        ? { id: roadmap._id, portalType: roadmap.portalType, aiResponse: roadmap.aiResponse, createdAt: roadmap.createdAt }
+        : null,
+      progress: {
+        completedTopicIds: progress.completedTopicIds,
+        progressPercentage: progress.completionPercentage,
+        completedCount: progress.completedTopics,
+        totalTopics: progress.totalTopics,
+        weeklyTarget: progress.weeklyTarget,
+        learningSpeed: progress.learningSpeed,
+        remainingTopics: progress.remainingTopics,
+      },
+    });
+  } catch (err) {
+    console.error('Profile retrieval error:', err.message);
+    return res.status(500).json({ message: 'Unable to retrieve profile' });
+  }
+});
 
 router.get('/', auth, async (req, res) => {
   try {
@@ -61,7 +119,7 @@ router.patch('/:id/topics/:topicId', auth, async (req, res) => {
     });
     if (!roadmap) return res.status(404).json({ message: 'Roadmap not found' });
 
-    const validTopicIds = new Set(getRoadmapTopics(roadmap.aiResponse).map((topic) => topic.id));
+    const validTopicIds = new Set(getRoadmapCheckpoints(roadmap.aiResponse).map((topic) => topic.id));
     if (!validTopicIds.has(req.params.topicId)) {
       return res.status(400).json({ message: 'Topic does not exist in this roadmap' });
     }

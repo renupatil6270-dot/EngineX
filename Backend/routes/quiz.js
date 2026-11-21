@@ -6,9 +6,9 @@ const Roadmap = require('../models/Roadmap');
 const aiRoutes = require('./ai');
 const { calculateRoadmapProgress } = require('../services/roadmapProgress');
 const portalFields = {
-    dreamer: ['domain', 'careerGoal', 'experience', 'hoursPerWeek'],
-    achiever: ['targetExam', 'targetDate', 'hoursPerWeek', 'weakAreas'],
-    innovator: ['projectType', 'techStack', 'teamSize', 'projectGoal'],
+    dreamer: ['academicStage', 'favoriteSubject', 'primaryGoal', 'hoursPerWeek'],
+    achiever: ['engineeringYear', 'careerObjective', 'milestoneTimeline', 'hoursPerWeek'],
+    innovator: ['ventureStage', 'biggestBottleneck', 'launchHorizon', 'builderHoursPerWeek'],
 };
 
 // POST /api/quiz/submit
@@ -44,7 +44,9 @@ router.post('/submit', auth, async (req, res) => {
         });
         await quizResult.save();
 
-        const roadmap = await aiRoutes.generateRoadmapContent(normalizedPortalType, answers);
+        const result = await aiRoutes.generateRoadmapContent(normalizedPortalType, answers);
+        const roadmap = result.roadmap;
+        const generationSource = result.generationSource;
         const roadmapResult = new Roadmap({
             userId: req.user.id,
             portalType: normalizedPortalType,
@@ -58,9 +60,13 @@ router.post('/submit', auth, async (req, res) => {
             roadmapId: roadmapResult._id,
             quizId: quizResult._id,
             progress: calculateRoadmapProgress(roadmap),
+            generationSource,
         });
     } catch (err) {
         console.error('Quiz submission error:', err);
+        if (Number(err.statusCode) === 429) {
+            res.set('Retry-After', String(err.retryAfterSeconds || 30));
+        }
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || 'Failed to process quiz submission',

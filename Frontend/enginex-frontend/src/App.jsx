@@ -1,7 +1,6 @@
 // src/App.jsx
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
 import Navbar from './Components/Navbar';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -9,14 +8,15 @@ import PortalSelection from './pages/PortalSelection';
 import DreamerQuiz from './pages/DreamerQuiz';
 import AchieverQuiz from './pages/AchieverQuiz';
 import InnovatorQuiz from './pages/InnovatorQuiz';
+import Profile from './pages/Profile';
+import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './Components/ProtectedRoute';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Navbar />
-        <Routes>
+    <BrowserRouter>
+      <Navbar />
+      <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -40,11 +40,12 @@ export default function App() {
           />
           <Route path="/achiever-quiz" element={<ProtectedRoute><AchieverQuiz /></ProtectedRoute>} />
           <Route path="/innovator-quiz" element={<ProtectedRoute><InnovatorQuiz /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
           {/* Default Fallback */}
           <Route path="*" element={<Navigate to="/portals" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+      </Routes>
+    </BrowserRouter>
   );
 }
