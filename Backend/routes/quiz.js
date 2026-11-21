@@ -4,6 +4,7 @@ const auth = require('../middleware/auth');
 const Quiz = require('../models/Quiz');
 const Roadmap = require('../models/Roadmap');
 const aiRoutes = require('./ai');
+const { calculateRoadmapProgress } = require('../services/roadmapProgress');
 const portalFields = {
     dreamer: ['domain', 'careerGoal', 'experience', 'hoursPerWeek'],
     achiever: ['targetExam', 'targetDate', 'hoursPerWeek', 'weakAreas'],
@@ -56,6 +57,7 @@ router.post('/submit', auth, async (req, res) => {
             roadmap,
             roadmapId: roadmapResult._id,
             quizId: quizResult._id,
+            progress: calculateRoadmapProgress(roadmap),
         });
     } catch (err) {
         console.error('Quiz submission error:', err);

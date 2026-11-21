@@ -15,6 +15,25 @@ const roadmapSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     required: true,
   },
+  progress: {
+    completedTopics: {
+      type: [{
+        topicId: {
+          type: String,
+          required: true,
+        },
+        completedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      }],
+      default: [],
+    },
+    lastUpdated: {
+      type: Date,
+      default: Date.now,
+    },
+  },
   createdAt: {
     type: Date,
     default: Date.now,

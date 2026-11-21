@@ -3,18 +3,55 @@ import { Link } from 'react-router-dom';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
-function RoadmapList({ title, items, marker, markerClass }) {
+function RoadmapList({ title, items, marker, markerClass, phaseIndex, completedTopicIds, onToggleTopic, savingTopic }) {
   return (
     <div>
       <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">{title}</h3>
       <ul className="mt-3 space-y-2 text-sm text-slate-300">
-        {items.map((item) => <li key={item} className="flex gap-2"><span className={markerClass}>{marker}</span>{item}</li>)}
+        {items.map((item, topicIndex) => {
+          const topicId = `phase-${phaseIndex}-topic-${topicIndex}`;
+          const completed = completedTopicIds.includes(topicId);
+          return (
+            <li key={topicId}>
+              <button
+                type="button"
+                className={`flex w-full items-start gap-2 rounded-lg px-2 py-1 text-left transition-colors hover:bg-slate-800/80 ${completed ? 'text-slate-500 line-through' : 'text-slate-300'}`}
+                onClick={() => onToggleTopic(topicId, !completed)}
+                disabled={savingTopic === topicId}
+                aria-pressed={completed}
+              >
+                <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${completed ? 'border-teal-300 bg-teal-300 text-slate-950' : `border-slate-600 ${markerClass}`}`}>
+                  {completed ? '✓' : marker}
+                </span>
+                {item}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
 }
 
-function RoadmapView({ roadmap }) {
+function RoadmapView({ roadmapState }) {
+  const { roadmap, roadmapId } = roadmapState;
+  const [progress, setProgress] = useState(roadmapState.progress);
+  const [savingTopic, setSavingTopic] = useState('');
+  const [error, setError] = useState('');
+
+  const toggleTopic = async (topicId, completed) => {
+    setSavingTopic(topicId);
+    setError('');
+    try {
+      const response = await API.patch(`/roadmaps/${roadmapId}/topics/${topicId}`, { completed });
+      setProgress(response.data.progress);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Unable to update roadmap progress.');
+    } finally {
+      setSavingTopic('');
+    }
+  };
+
   return (
     <main className="mx-auto min-h-[calc(100vh-4.5rem)] max-w-5xl px-4 py-10 sm:px-8 sm:py-16">
       <Link to="/portals" className="text-sm font-medium text-slate-400 transition-colors hover:text-teal-300">← Back to portals</Link>
@@ -22,6 +59,13 @@ function RoadmapView({ roadmap }) {
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-teal-300">Your personalized roadmap</p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-100 sm:text-4xl">{roadmap.title}</h1>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-400">{roadmap.summary}</p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-3"><p className="text-xs text-slate-500">Progress</p><p className="mt-1 text-xl font-bold text-teal-300">{progress.completionPercentage}%</p></div>
+          <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-3"><p className="text-xs text-slate-500">Completed</p><p className="mt-1 text-xl font-bold text-slate-100">{progress.completedTopics}/{progress.totalTopics}</p></div>
+          <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-3"><p className="text-xs text-slate-500">This week's target</p><p className="mt-1 text-xl font-bold text-blue-300">{progress.weeklyTarget} topics</p></div>
+          <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-3"><p className="text-xs text-slate-500">Learning speed</p><p className="mt-1 text-xl font-bold text-slate-100">{progress.learningSpeed} / week</p></div>
+        </div>
+        {error && <p role="alert" className="mt-4 rounded-xl border border-rose-400/30 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{error}</p>}
         <div className="relative mt-10 space-y-5 before:absolute before:bottom-5 before:left-[1.15rem] before:top-5 before:w-px before:bg-gradient-to-b before:from-teal-300 before:to-blue-500">
           {roadmap.phases.map((phase, index) => (
             <article key={`${phase.phaseName}-${index}`} className="relative ml-1 pl-12">
@@ -35,7 +79,7 @@ function RoadmapView({ roadmap }) {
                   </div>
                 </div>
                 <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                  <RoadmapList title="Topics" items={phase.topics} marker="•" markerClass="text-teal-300" />
+                  <RoadmapList title="Topics" items={phase.topics} marker="•" markerClass="text-teal-300" phaseIndex={index} completedTopicIds={progress.completedTopicIds} onToggleTopic={toggleTopic} savingTopic={savingTopic} />
                   <RoadmapList title="Projects" items={phase.projects} marker="◆" markerClass="text-blue-300" />
                 </div>
               </div>
@@ -72,7 +116,11 @@ export default function PortalQuiz({ portalType, eyebrow, title, description, qu
       if (!response.data?.success || !response.data.roadmap) {
         throw new Error('The server returned an invalid roadmap response.');
       }
-      setRoadmap(response.data.roadmap);
+      setRoadmap({
+        roadmap: response.data.roadmap,
+        roadmapId: response.data.roadmapId,
+        progress: response.data.progress,
+      });
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Unable to generate your roadmap. Please try again.');
     } finally {
@@ -80,7 +128,7 @@ export default function PortalQuiz({ portalType, eyebrow, title, description, qu
     }
   };
 
-  if (roadmap) return <RoadmapView roadmap={roadmap} />;
+  if (roadmap) return <RoadmapView roadmapState={roadmap} />;
 
   if (loading) {
     return (

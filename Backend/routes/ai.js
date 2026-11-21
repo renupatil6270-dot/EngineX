@@ -3,9 +3,11 @@ const { GoogleGenAI } = require('@google/genai');
 const auth = require('../middleware/auth');
 const Quiz = require('../models/Quiz');
 const Roadmap = require('../models/Roadmap');
+const { calculateRoadmapProgress } = require('../services/roadmapProgress');
 
 const router = express.Router();
-const GEMINI_MODEL = 'gemini-3.8-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const MAX_TRANSIENT_RETRIES = 2;
 
 const portalFields = {
   dreamer: ['domain', 'careerGoal', 'experience', 'hoursPerWeek'],
@@ -80,13 +82,37 @@ ${JSON.stringify(answers, null, 2)}
 Make the roadmap achievable, sequential, and specific. Include 3 to 5 phases. Every phase must have at least two topics and one project. Tailor the phase names and projects to the selected portal.
   `.trim();
 
-  const response = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: prompt,
-    config: {
-      responseMimeType: 'application/json',
-    },
-  });
+  let response;
+  let lastError;
+
+  for (let attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt += 1) {
+    try {
+      response = await ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
+      break;
+    } catch (error) {
+      lastError = error;
+      const statusCode = Number(error.status || error.statusCode || error.code);
+      const isTransient = statusCode === 429 || statusCode === 500 || statusCode === 503;
+      if (!isTransient || attempt === MAX_TRANSIENT_RETRIES) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+    }
+  }
+
+  if (!response) {
+    const error = new Error(
+      lastError?.message || `Gemini model ${GEMINI_MODEL} is currently unavailable`
+    );
+    error.statusCode = Number(lastError?.status || lastError?.statusCode || lastError?.code) || 503;
+    throw error;
+  }
 
   const responseText = response.text;
   if (!responseText) {
@@ -152,6 +178,7 @@ router.post('/generate-roadmap', auth, async (req, res) => {
       roadmap,
       roadmapId: roadmapResult._id,
       quizId: quizResult._id,
+      progress: calculateRoadmapProgress(roadmap),
     });
   } catch (aiError) {
     console.error('Portal Roadmap Error:', normalizedPortalType, aiError);

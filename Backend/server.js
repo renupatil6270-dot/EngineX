@@ -7,6 +7,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const quizRoutes = require('./routes/quiz');
 const aiRoutes = require('./routes/ai');
+const roadmapRoutes = require('./routes/roadmap');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use(cors({
 app.use('/api/auth', authRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/roadmaps', roadmapRoutes);
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/enginex';
