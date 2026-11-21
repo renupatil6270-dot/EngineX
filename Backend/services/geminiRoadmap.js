@@ -354,11 +354,21 @@ Create 3 to 5 achievable, sequential phases with at least two topics and one pro
       return { roadmap, generationSource: 'gemini' };
     } catch (error) {
       lastError = error;
-      const statusCode = getStatusCode(error);
-      if (statusCode !== 429 && statusCode !== 503) throw error;
+      console.warn(JSON.stringify({
+        event: 'Gemini roadmap generation failed; trying fallback',
+        model: modelName,
+        statusCode: getStatusCode(error),
+        error: error.message,
+      }));
+      continue;
     }
   }
 
+  console.warn(JSON.stringify({
+    event: 'Deterministic roadmap fallback activated',
+    portalType,
+    lastError: lastError?.message || 'Unknown Gemini error',
+  }));
   return {
     roadmap: generateDeterministicFallback(portalType, answers),
     generationSource: 'deterministic-fallback',

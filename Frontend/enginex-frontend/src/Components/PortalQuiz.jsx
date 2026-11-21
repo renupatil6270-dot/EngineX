@@ -157,7 +157,15 @@ export default function PortalQuiz({ portalType, eyebrow, title, description, qu
         progress: response.data.progress,
       });
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Unable to generate your roadmap. Please try again.');
+      const backendData = requestError.response?.data;
+      const actualMessage =
+        (typeof backendData === 'string' && backendData) ||
+        backendData?.message ||
+        backendData?.error ||
+        backendData?.details ||
+        requestError.message ||
+        'Unable to generate your roadmap. Please try again.';
+      setError(actualMessage);
     } finally {
       setLoading(false);
     }

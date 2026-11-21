@@ -36,8 +36,20 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/roadmaps', roadmapRoutes);
 
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  console.error('Express request error:', error.message);
+  return res.status(error.statusCode || error.status || 400).json({
+    success: false,
+    message: error.message || 'Invalid request',
+  });
+});
+
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/enginex';
+const MONGO_URI =
+  process.env.MONGO_URI ||
+  process.env.MONGODB_URI ||
+  'mongodb://127.0.0.1:27017/enginex';
 
 if (!process.env.GEMINI_API_KEY) {
   console.error('GEMINI_API_KEY is undefined. Roadmap generation will be unavailable.');
